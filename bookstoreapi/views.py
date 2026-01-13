@@ -1,4 +1,5 @@
 from rest_framework.viewsets import ModelViewSet
+from rest_framework.permissions import IsAdminUser, AllowAny, IsAuthenticatedOrReadOnly
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework.filters import OrderingFilter, SearchFilter
 from .models import Author, Book
@@ -11,13 +12,17 @@ class AuthorViewSet(ModelViewSet):
 
 
 class BookViewSet(ModelViewSet):
-    queryset = Book.objects.select_related('author').all()
+    queryset = Book.objects.select_related('author')
     serializer_class = BookSerializer
 
     filter_backends = [DjangoFilterBackend, OrderingFilter, SearchFilter]
-
-    filterset_fileds = ['author', 'stock']
+    filterset_fields = ['author', 'stock']
     search_fields = ['title', 'author__name']
     ordering_fields = ['created_at', 'title', 'price']
     ordering = ['-created_at']
+
+    def get_permissions(self):
+        if self.action in ('list', 'retrieve'):
+            return [AllowAny()]
+        return [IsAdminUser()]
 
